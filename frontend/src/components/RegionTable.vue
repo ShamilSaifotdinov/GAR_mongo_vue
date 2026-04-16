@@ -15,6 +15,28 @@
           :class="row.detailsShowing && 'collapsed'"
           @click="row.toggleDetails"></i>
       </template>
+
+      <template #cell()="row">
+        <template v-if="row.value.versions">
+          <div class="d-flex" style="gap: 8px;">
+            <div>{{ row.value.value }}</div>
+            <b-button v-if="row.value.versions.length > 0" v-b-toggle="'collapse-' + row.item.objectId + '-' + row.field.key" size="sm"><b-icon-chevron-compact-down /></b-button>
+          </div>
+
+          <b-collapse :id="'collapse-' + row.item.objectId + '-' + row.field.key" style="font-size: small;">
+            <b-table v-if="row.field.key == 'name'" :items="row.value.versions"
+              :fields="[ { key: 'name' }, { key: 'typename'}, { key: 'level'}, { key: 'ISACTUAL'}, { key: 'ISACTIVE'} ]"
+            ></b-table>
+            <template v-else>
+              <div>Прошлые версии:</div>
+              <div v-for="version, index in row.value.versions" :key="index">{{ version.value }}</div>
+            </template>
+          </b-collapse>
+
+        </template>
+
+        <template v-else>{{ row.value }}</template>
+      </template>
       
       <template v-if="levelId === 1" #row-details="row">
         <ItemHierarchy :parentId=row.item.objectId />
@@ -22,21 +44,6 @@
       <template v-else #row-details="row">
         <ItemLevels :parentId=row.item.objectId :hierarchy="hierarchy" />
       </template>
-      <!-- <template #row-details="row">
-        <b-card>
-          <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>Age:</b></b-col>
-            <b-col>{{ row.item.age }}</b-col>
-          </b-row>
-
-          <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>Is Active:</b></b-col>
-            <b-col>{{ row.item.isActive }}</b-col>
-          </b-row>
-
-          <b-button size="sm" @click="row.toggleDetails">Hide Details</b-button>
-        </b-card>
-      </template> -->
     </b-table>
     <p v-if="!loading && !items" role="alert">Данные отсутствуют</p>
   </div>
@@ -60,33 +67,33 @@ export default {
                     label: " ",
                     tdClass: "item"
                 },
-                // {
-                //     key: "objectId",
-                //     label: "ID"
-                // },
                 {
-                    key: "name",
-                    label: "Наименование"
+                    key: "objectId",
+                    label: "ID"
                 },
                 {
-                    key: "typename",
+                    key: "name",
+                    label: "Наименование",
+                },
+                {
+                    key: "objectType",
                     label: "Тип",
                     tdClass: "typename"
                 },
                 {
                     key: "CODE",
                     label: "КЛАДР",
-                    tdClass: "CODE"
+                    tdClass: "CODE",
                 },
                 {
                     key: "OKATO",
                     label: "ОКАТО",
-                    tdClass: "OKATO"
+                    tdClass: "OKATO",
                 },
                 {
                     key: "OKTMO",
                     label: "ОКТМО",
-                    tdClass: "OKTMO"
+                    tdClass: "OKTMO",
                 },
                 {
                     key: "postIndex",
@@ -118,9 +125,25 @@ export default {
                 if (!response.ok)
                     throw new Error;
                 const data = await response.json();
+
+                data.forEach((elem) => {
+                  const actual_version = elem.versions.find((version) => version.ISACTUAL == "1" && version.ISACTIVE == "1")
+                  if (!actual_version) console.log(elem)
+
+                  elem.name = { value: actual_version?.name, versions: elem.versions.filter((version) => version.ISACTUAL == "0" || version.ISACTIVE == "0") || [] }
+                  elem.objectType = actual_version?.typename
+                  elem.levelId = actual_version?.level
+
+                  for (const key of ['CODE', 'OKTMO', 'OKATO']) {
+                    elem[key] = { value : elem[key].find((param) => param.CHANGEIDEND == "0")?.value, versions: elem[key].filter((param) => param.CHANGEIDEND != "0") }
+                  }
+                })
+
                 if (this.hierarchy === 'adm') data.sort((a, b) => a.CODE - b.CODE || a.OKTMO - b.OKTMO)
                 else data.sort((a, b) => a.OKTMO - b.OKTMO || a.CODE - b.CODE )
-                // console.log(data)
+
+                console.log("table:", data)
+
                 data.length && (this.items = data);
             }
             catch (e) {

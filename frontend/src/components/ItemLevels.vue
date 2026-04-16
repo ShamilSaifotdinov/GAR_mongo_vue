@@ -23,7 +23,6 @@
 
       <template #cell(levelName)="data">
         {{ `${data.item.levelName}` }}
-        <!-- {{ ` (${data.item.count})` }} -->
         <b-badge variant="dark" pill>{{ `${data.item.count}` }}</b-badge>
       </template>
     </b-table>
@@ -64,7 +63,8 @@ export default {
         if (!response.ok) throw new Error
 
         const data = await response.json()
-        // console.log(data)
+        // console.log("levels:", data)
+
         data.length && (this.items = data)
       }
       catch (e) {
