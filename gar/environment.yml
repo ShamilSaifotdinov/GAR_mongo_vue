@@ -1,0 +1,4 @@
+dependencies:
+  - python=3.10
+  - conda-forge::pymongo=4.10.1
+  - django=5.1.3

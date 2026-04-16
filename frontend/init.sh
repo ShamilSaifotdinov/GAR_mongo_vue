@@ -2,4 +2,5 @@
 
 conda env create --prefix ./.env -f environment.yml
 source activate base && conda activate ./.env
-python manage.py runserver
+npm install
+npm run serve

@@ -6,8 +6,9 @@ from utils import get_database
 import json
 
 db = get_database()
-region = db["87"]
+region = db["addr"]
 
+# Create your views here.
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
@@ -63,4 +64,3 @@ def levels(request, objectId, hierarchy):
     # print(elem)
     # print(json.dumps(elem))
     return HttpResponse(json.dumps(elem), content_type='application/json')
-# Create your views here.
